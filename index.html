@@ -56,6 +56,7 @@
             box-shadow: 0 0px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             cursor: pointer;
+            overflow-x: clip;
         }
 
         .location-item:hover {
@@ -68,6 +69,7 @@
             font-size: 18px;
             color: #333;
             font-weight: 600;
+            word-break: break-all;
         }
 
         .location-detail {
@@ -76,6 +78,7 @@
             font-size: 14px;
             display: flex;
             align-items: center;
+            word-break: break-all;
         }
 
         .location-detail svg {
@@ -295,7 +298,7 @@
 
                     const name = props['First Name'] + ' ' + props['Last Name'];
                     const email = props['Email address'];
-                    const address = props['Program City'] + ', ' + props['Program State'] + ', ' + item['Program Zip Code'];
+                    const address = props['Program City'] + ', ' + props['Program State'] + ', ' + props['Program Zip Code'];
 
                     const div = document.createElement('div');
                     div.className = 'location-item';
