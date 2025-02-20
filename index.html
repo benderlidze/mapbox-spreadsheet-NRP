@@ -44,6 +44,8 @@
             padding: 20px;
             background: white;
             overflow-y: auto;
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.5);
+            z-index: 1;
         }
 
         .location-item {
@@ -51,7 +53,7 @@
             margin: 10px 0;
             border-radius: 8px;
             background: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             cursor: pointer;
         }
@@ -98,6 +100,18 @@
             padding: 5px !important;
             box-sizing: border-box;
         }
+
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 100%;
+        }
     </style>
 </head>
 
@@ -110,6 +124,7 @@
 
     <script>
 
+        let bounds;
         const infoDiv = document.getElementById('info');
 
         const appData = {
@@ -121,7 +136,7 @@
             container: 'map',
             // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
             style: 'mapbox://styles/mapbox/light-v11',
-            zoom: 0,
+            zoom: 2,
             center: { lng: -0.02665959675479712, lat: 2 },
             projection: 'mercator'
         });
@@ -142,16 +157,14 @@
                 .then(data => {
                     console.log(data);
 
-                    const bounds = new mapboxgl.LngLatBounds();
+                    bounds = new mapboxgl.LngLatBounds();
 
                     const points = data
                         .filter(row => row["Lat"] !== "" && row["Lon"] !== "")
                         .map(row => {
-                            console.log(row);
 
                             const lat = parseFloat(row["Lat"]);
                             const lon = parseFloat(row["Lon"]);
-
 
                             bounds.extend([lon, lat]);
 
@@ -207,13 +220,16 @@
             });
 
             map.on("click", "points", (e) => {
+
                 const row = e.features[0].properties;
+
+                const name = row['First Name'] + ' ' + row['Last Name'];
+
                 const popup = new mapboxgl.Popup()
                     .setLngLat(e.lngLat)
                     .setHTML(`
-                        <h3>${row.name}</h3>
-                        <p>${row.country}</p>
-                        <p>${row.priority}</p>
+                        <h3>${name}</h3>
+                        <p>${row['City']}</p>
                     `)
                     .addTo(map);
             });
@@ -236,8 +252,36 @@
                     return turf.booleanPointInPolygon(point, bboxPolygon);
                 });
 
-                // Update the list
-                generateItems(visiblePoints);
+                console.log('visiblePoints.length', visiblePoints.length);
+
+                if (visiblePoints.length > 0) {
+                    generateItems(visiblePoints);
+                } else {
+
+                    infoDiv.innerHTML = '';
+                    infoDiv.appendChild(resetView());
+                }
+
+            }
+
+            function resetView() {
+
+                const div = document.createElement('div');
+
+                const span = document.createElement('span');
+                span.innerHTML = 'There are no items in this view.';
+
+                const button = document.createElement('button');
+                button.className = 'btn';
+                button.innerHTML = 'Reset View';
+                button.onclick = () => {
+                    map.fitBounds(bounds, { padding: 50 });
+                };
+
+                div.appendChild(span);
+                div.appendChild(button);
+
+                return div;
 
             }
 
@@ -245,20 +289,27 @@
 
                 infoDiv.innerHTML = '';
 
-                itemsArray.forEach(item => {
+                itemsArray.forEach((item) => {
+
+                    const props = item.properties;
+
+                    const name = props['First Name'] + ' ' + props['Last Name'];
+                    const email = props['Email address'];
+                    const address = props['Program City'] + ', ' + props['Program State'] + ', ' + item['Program Zip Code'];
+
                     const div = document.createElement('div');
                     div.className = 'location-item';
                     div.innerHTML = `
-                        <h3 class="location-name">${item.properties.name}</h3>
+                        <h3 class="location-name">${name}</h3>
                         <div class="location-detail">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            ${item.properties.country}
+                            ${address}
                         </div>
                         <div class="location-detail">
-                            <span class="priority-tag">${item.properties.priority}</span>
+                            <span class="priority-tag">${email}</span>
                         </div>
                     `;
 
