@@ -129,7 +129,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
+            z-index: 9;
             padding: 20px;
             box-sizing: border-box;
             color: white;
@@ -180,6 +180,49 @@
             font-weight: bold;
             padding-bottom: 10px;
         }
+
+        /* Filter styles */
+        #filters-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+
+        .filter-section {
+            margin-bottom: 8px;
+        }
+
+        .filter-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-option input {
+            margin-right: 4px;
+        }
+
+        .filter-option label {
+            font-size: 13px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -216,6 +259,26 @@
             </div>
         </div>
         <div id="content-container">
+            <!-- Add filter controls -->
+            <div id="filters-container">
+                <div class="filter-section">
+                    <h4>Program Population</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-both" value="both" checked />
+                            <label for="filter-both">Both</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-pediatric" value="pediatric" checked />
+                            <label for="filter-pediatric">Pediatric</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-adult" value="adult" checked />
+                            <label for="filter-adult">Adult</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="info"></div>
             <div id="map"></div>
         </div>
@@ -247,6 +310,62 @@
         </div>
     </div>
     </div>
+
+    Program Population (choice=Adult)
+    :
+    "Checked"
+    Program Population (choice=Both)
+    :
+    "Checked"
+    Program Population (choice=Pediatric)
+    :
+    "Checked"
+    Program Setting (Select all that applies) (choice=Other)
+    :
+    "Unchecked"
+    Program Setting (Select all that applies) (choice=Rural)
+    :
+    "Unchecked"
+    Program Setting (Select all that applies) (choice=Suburban)
+    :
+    "Unchecked"
+    Program Setting (Select all that applies) (choice=Urban)
+    :
+    "Checked"
+    Program State
+    :
+    "Georgia "
+    Program Zip Code
+    :
+    "30403"
+    Role in your organization
+    :
+    "Director "
+    Website/link to your program:
+    :
+    "https://www.atlantaga.gov/government/mayor-s-office/executive-offices/office-of-violence-reduction"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide
+    prevention protocol)
+    :
+    "Unchecked"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based
+    Violence Intervention Programs and working with communities)
+    :
+    "Unchecked"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health
+    system data to improve firearm injury surveillance and programmatic evaluation)
+    :
+    "Checked"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)
+    :
+    "Checked"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and
+    intervening among patients at-risk for firearm injuries)
+    :
+    "Checked"
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)
+    :
+    "Unchecked"
 
     <script>
         let bounds;
@@ -365,8 +484,6 @@
                             }
                         });
 
-                        console.log('checkedFields', checkedFields);
-
                         const orgName = row["Name of your organization(s)"];
                         const programName = row["Program Name"];
                         const description = row["Brief Program Description"];
@@ -403,6 +520,9 @@
                     type: "FeatureCollection",
                     features: appData.points,
                 });
+
+                // Set up the filters after data is loaded
+                setupFilters();
             });
 
             map.addSource("points", {
@@ -475,8 +595,19 @@
                 ];
                 const bboxPolygon = turf.bboxPolygon(bbox);
 
+                // Apply both bounds filter and active filters
                 const visiblePoints = appData.points.filter((point) => {
-                    return turf.booleanPointInPolygon(point, bboxPolygon);
+                    if (!turf.booleanPointInPolygon(point, bboxPolygon)) {
+                        return false;
+                    }
+
+                    // Check population filter
+                    const iconType = point.properties.iconType;
+                    if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
+                    if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
+                    if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
+
+                    return true;
                 });
 
                 console.log("visiblePoints.length", visiblePoints.length);
@@ -545,6 +676,60 @@
                 });
             }
         });
+
+        // Add filter functionality
+        let activeFilters = {
+            population: ['both', 'pediatric', 'adult']
+        };
+
+        function setupFilters() {
+            // Population filter checkboxes
+            document.getElementById('filter-both').addEventListener('change', function (e) {
+                updateFilter('population', 'both', e.target.checked);
+            });
+
+            document.getElementById('filter-pediatric').addEventListener('change', function (e) {
+                updateFilter('population', 'pediatric', e.target.checked);
+            });
+
+            document.getElementById('filter-adult').addEventListener('change', function (e) {
+                updateFilter('population', 'adult', e.target.checked);
+            });
+        }
+
+        function updateFilter(filterType, value, isActive) {
+            if (isActive) {
+                if (!activeFilters[filterType].includes(value)) {
+                    activeFilters[filterType].push(value);
+                }
+            } else {
+                activeFilters[filterType] = activeFilters[filterType].filter(item => item !== value);
+            }
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // Filter the points based on active filters
+            const filteredPoints = appData.points.filter(point => {
+                const props = point.properties;
+                const iconType = props.iconType;
+
+                // Check if the population type matches active filters
+                if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
+                if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
+                if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
+
+                return true;
+            });
+
+            // Update the map with filtered points
+            map.getSource('points').setData({
+                type: 'FeatureCollection',
+                features: filteredPoints
+            });
+
+        }
     </script>
 </body>
 
