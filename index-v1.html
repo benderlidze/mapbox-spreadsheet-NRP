@@ -184,8 +184,8 @@
         /* Filter styles */
         #filters-container {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            bottom: 10px;
+            right: 10px;
             z-index: 1000;
             background: white;
             padding: 10px;
@@ -266,14 +266,25 @@
                     <div class="filter-options">
                         <div class="filter-option">
                             <input type="checkbox" id="filter-both" value="both" checked />
+                            <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2">
+                                </polygon>
+                            </svg>
                             <label for="filter-both">Both</label>
                         </div>
                         <div class="filter-option">
                             <input type="checkbox" id="filter-pediatric" value="pediatric" checked />
+                            <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+                            </svg>
                             <label for="filter-pediatric">Pediatric</label>
                         </div>
                         <div class="filter-option">
                             <input type="checkbox" id="filter-adult" value="adult" checked />
+                            <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2">
+                                </rect>
+                            </svg>
                             <label for="filter-adult">Adult</label>
                         </div>
                     </div>
@@ -301,6 +312,37 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Focus Areas filter section -->
+                <div class="filter-section">
+                    <h4>Focus Areas</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-suicide-prevention" value="suicide-prevention" checked />
+                            <label for="filter-suicide-prevention">Firearm Suicide Prevention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-hospital-based" value="hospital-based" checked />
+                            <label for="filter-hospital-based">Hospital-Based Violence Intervention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-data-surveillance" value="data-surveillance" checked />
+                            <label for="filter-data-surveillance">Data Surveillance</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-screening" value="screening" checked />
+                            <label for="filter-screening">Screening & Intervention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-workplace" value="workplace" checked />
+                            <label for="filter-workplace">Workplace Safety</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-focus-other" value="focus-other" checked />
+                            <label for="filter-focus-other">Other</label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="info"></div>
             <div id="map"></div>
@@ -310,7 +352,7 @@
     <!-- Add hidden SVG icons for conversion -->
 
 
-    <div id="map-legend"
+    <!-- <div id="map-legend"
         style="position: absolute; bottom: 30px; right: 30px; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1;">
         <h4 style="margin: 0 0 10px 0;">Program Population</h4>
         <div style="display: flex; align-items: center; margin: 5px 0;">
@@ -320,59 +362,23 @@
             <span style="margin-left: 8px">Pediatric</span>
         </div>
         <div style="display: flex; align-items: center; margin: 5px 0;">
-            <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
-                <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2"></rect>
-            </svg>
+
             <span style="margin-left: 8px">Adult</span>
         </div>
         <div style="display: flex; align-items: center; margin: 5px 0;">
-            <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
-                <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2"></polygon>
-            </svg>
+
             <span style="margin-left: 8px">Both</span>
         </div>
-    </div>
+    </div> -->
     </div>
 
-    Program Population (choice=Adult)
-    :
-    "Checked"
-    Program Population (choice=Both)
-    :
-    "Checked"
-    Program Population (choice=Pediatric)
-    :
-    "Checked"
-    Program Setting (Select all that applies) (choice=Other)
-    :
-    "Unchecked"
-    Program Setting (Select all that applies) (choice=Rural)
-    :
-    "Unchecked"
-    Program Setting (Select all that applies) (choice=Suburban)
-    :
-    "Unchecked"
-    Program Setting (Select all that applies) (choice=Urban)
-    :
-    "Checked"
-    Program State
-    :
-    "Georgia "
-    Program Zip Code
-    :
-    "30403"
-    Role in your organization
-    :
-    "Director "
-    Website/link to your program:
-    :
+
     "https://www.atlantaga.gov/government/mayor-s-office/executive-offices/office-of-violence-reduction"
     Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide
     prevention protocol)
     :
     "Unchecked"
-    Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based
-    Violence Intervention Programs and working with communities)
+    Which of the following focus areas does your program fall under? (Select all that applies) (choice=)
     :
     "Unchecked"
     Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health
@@ -645,6 +651,24 @@
 
                     if (!hasMatchingSetting) return false;
 
+                    // Check focus areas
+                    let hasMatchingFocusArea = false;
+                    const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
+                    const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
+                    const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
+                    const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
+                    const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
+                    const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
+
+                    if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
+                    if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
+                    if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
+                    if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
+                    if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
+                    if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
+
+                    if (!hasMatchingFocusArea) return false;
+
                     return true;
                 });
 
@@ -676,10 +700,6 @@
 
                 return div;
             }
-            // 1. Can we add filters so that individuals using this map can filter to any of the following criterions: "Program population" (columns P, Q, R), and/or "Program Setting" (columns S, T, U), and/or "Which of the following focus areas does your program fall under?" (columns X, Y, Z, AA, AB, AC)
-            // 2. Can we have the dot shapes correspond to Program population, whereas circle dots would be for "pediatric", square dots would be for "adults", and triangle dots would be for "both"? Can we also make sure there is a label somewhere visible so individuals know what dots corresponds to which category?
-            // 3. Can the information that shows up on the left side bar be update to show the following: "Name of your organization", "Program Name", and "Brief Program Description"?
-            // 4. When someone clicks on a specific dot, can the following information display in t
 
             function generateItems(itemsArray) {
                 infoDiv.innerHTML = "";
@@ -718,7 +738,8 @@
         // Add filter functionality
         let activeFilters = {
             population: ['both', 'pediatric', 'adult'],
-            setting: ['other', 'rural', 'suburban', 'urban']
+            setting: ['other', 'rural', 'suburban', 'urban'],
+            focusAreas: ['suicide-prevention', 'hospital-based', 'data-surveillance', 'screening', 'workplace', 'focus-other']
         };
 
         function setupFilters() {
@@ -750,6 +771,31 @@
 
             document.getElementById('filter-urban').addEventListener('change', function (e) {
                 updateFilter('setting', 'urban', e.target.checked);
+            });
+
+            // Focus Areas filter checkboxes
+            document.getElementById('filter-suicide-prevention').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'suicide-prevention', e.target.checked);
+            });
+
+            document.getElementById('filter-hospital-based').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'hospital-based', e.target.checked);
+            });
+
+            document.getElementById('filter-data-surveillance').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'data-surveillance', e.target.checked);
+            });
+
+            document.getElementById('filter-screening').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'screening', e.target.checked);
+            });
+
+            document.getElementById('filter-workplace').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'workplace', e.target.checked);
+            });
+
+            document.getElementById('filter-focus-other').addEventListener('change', function (e) {
+                updateFilter('focusAreas', 'focus-other', e.target.checked);
             });
         }
 
@@ -791,6 +837,26 @@
 
                 // If no setting matches our filters, exclude this point
                 if (!hasMatchingSetting) return false;
+
+                // Check focus areas
+                let hasMatchingFocusArea = false;
+                const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
+                const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
+                const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
+                const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
+                const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
+                const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
+
+                // If any focus area filter matches, show the point
+                if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
+                if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
+                if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
+                if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
+                if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
+                if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
+
+                // If no focus area matches our filters, exclude this point
+                if (!hasMatchingFocusArea) return false;
 
                 return true;
             });
@@ -859,6 +925,24 @@
                 if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
 
                 if (!hasMatchingSetting) return false;
+
+                // Check focus areas
+                let hasMatchingFocusArea = false;
+                const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
+                const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
+                const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
+                const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
+                const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
+                const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
+
+                if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
+                if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
+                if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
+                if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
+                if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
+                if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
+
+                if (!hasMatchingFocusArea) return false;
 
                 return true;
             });
