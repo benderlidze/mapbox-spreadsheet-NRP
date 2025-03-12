@@ -187,6 +187,10 @@
       #splash-close:hover {
         background-color: #0056b3;
       }
+
+      .title {
+        font-weight: bold;
+      }
     </style>
   </head>
 
@@ -233,37 +237,49 @@
     </div>
 
     <!-- Add hidden SVG icons for conversion -->
-    <div style="display: none">
-      <svg id="circle-icon" width="30" height="30" viewBox="0 0 30 30">
-        <circle
-          cx="15"
-          cy="15"
-          r="12"
-          fill="red"
-          stroke="white"
-          stroke-width="2"
-        ></circle>
-      </svg>
-      <svg id="square-icon" width="30" height="30" viewBox="0 0 30 30">
-        <rect
-          x="3"
-          y="3"
-          width="24"
-          height="24"
-          fill="green"
-          stroke="white"
-          stroke-width="2"
-        ></rect>
-      </svg>
-      <svg id="triangle-icon" width="30" height="30" viewBox="0 0 30 30">
-        <polygon
-          points="15,3 27,27 3,27"
-          fill="orange"
-          stroke="white"
-          stroke-width="2"
-        ></polygon>
-      </svg>
-    </div>
+  
+
+    <div id="map-legend" style="position: absolute; bottom: 30px; right: 30px; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1;">
+      <h4 style="margin: 0 0 10px 0;">Program Population</h4>
+      <div style="display: flex; align-items: center; margin: 5px 0;">
+        <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+            <circle
+              cx="15"
+              cy="15"
+              r="12"
+              fill="red"
+              stroke="white"
+              stroke-width="2"
+            ></circle>
+          </svg>
+        <span style="margin-left: 8px">Pediatric</span>
+      </div>
+      <div style="display: flex; align-items: center; margin: 5px 0;">
+        <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
+            <rect
+              x="3"
+              y="3"
+              width="24"
+              height="24"
+              fill="green"
+              stroke="white"
+              stroke-width="2"
+            ></rect>
+          </svg>
+        <span style="margin-left: 8px">Adult</span>
+      </div>
+      <div style="display: flex; align-items: center; margin: 5px 0;">
+        <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
+            <polygon
+              points="15,3 27,27 3,27"
+              fill="orange"
+              stroke="white"
+              stroke-width="2"
+            ></polygon>
+          </svg>
+        <span style="margin-left: 8px">Both</span>
+      </div>
+    </div></div>
 
     <script>
       let bounds;
@@ -350,10 +366,11 @@
 
           const points = data
             .filter((row) => row["Lat"] !== "" && row["Lon"] !== "")
-            .map((row) => {
+            .map((row, index) => {
+              console.log(index, row, row["Lat"], row["Lon"]);
               const lat = parseFloat(row["Lat"]);
               const lon = parseFloat(row["Lon"]);
-
+              console.log("-------");
               bounds.extend([lon, lat]);
 
               const adult = row["Program Population (choice=Adult)"];
@@ -370,6 +387,17 @@
               if (adult === "Checked") {
                 iconType = "square";
               }
+
+              const checkedFields = [];
+
+              //   Object.entries(row).forEach(([key, value]) => {
+              //     if (
+              //       value === "Checked" &&
+              //       key.includes("following focus areas does your program fall")
+              //     ) {
+              //       checkedFields.push(key);
+              //     }
+              //   });
 
               const orgName = row["Name of your organization(s)"];
               const programName = row["Program Name"];
@@ -450,12 +478,12 @@
             .setLngLat(e.lngLat)
             .setHTML(
               `
-                    <h3>${programName}</h3>
+                    <h3 class="title">${programName}</h3>
                     <div>${description}</div>
                     <div>Phone: ${phone}</div>
                     <div>Email: ${email}</div>
                     <div>Website: ${website}</div>
-                        
+
 
                   `
             )
