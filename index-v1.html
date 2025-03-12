@@ -211,14 +211,42 @@
         </div>
     </div>
 
+    <!-- Add hidden SVG icons for conversion -->
+    <div style="display: none;">
+        <svg id="circle-icon" width="30" height="30" viewBox="0 0 30 30">
+            <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+        </svg>
+        <svg id="square-icon" width="30" height="30" viewBox="0 0 30 30">
+            <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2"></rect>
+        </svg>
+        <svg id="triangle-icon" width="30" height="30" viewBox="0 0 30 30">
+            <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2"></polygon>
+        </svg>
+    </div>
+
     <script>
         let bounds;
 
-        
+        // Function to convert SVG to image
+        function svgToImage(svgElement, callback) {
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svg64 = btoa(svgString);
+            const image = new Image();
+            image.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = 30; // Match SVG width
+                canvas.height = 30; // Match SVG height
+                const context = canvas.getContext('2d');
+                context.drawImage(image, 0, 0);
+                callback(canvas.toDataURL('image/png'));
+            };
+            image.src = 'data:image/svg+xml;base64,' + svg64;
+        }
 
         const infoDiv = document.getElementById('info');
         const appData = {
             points: [],
+            icons: {}
         };
 
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw';
@@ -241,7 +269,33 @@
 
 
         map.on('load', () => {
+            // Convert SVG icons to images
+            svgToImage(document.getElementById('circle-icon'), function (dataUrl) {
+                appData.icons.circle = dataUrl;
+                const circleImage = new Image();
+                circleImage.onload = function () {
+                    map.addImage('circle-icon', circleImage);
+                };
+                circleImage.src = dataUrl;
+            });
 
+            svgToImage(document.getElementById('square-icon'), function (dataUrl) {
+                appData.icons.square = dataUrl;
+                const squareImage = new Image();
+                squareImage.onload = function () {
+                    map.addImage('square-icon', squareImage);
+                };
+                squareImage.src = dataUrl;
+            });
+
+            svgToImage(document.getElementById('triangle-icon'), function (dataUrl) {
+                appData.icons.triangle = dataUrl;
+                const triangleImage = new Image();
+                triangleImage.onload = function () {
+                    map.addImage('triangle-icon', triangleImage);
+                };
+                triangleImage.src = dataUrl;
+            });
 
             d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5drxX_4NdOfkaLppzMqDkM102yvZPMGPUFrW8IFuN2v78Tv2142-kI4lgS6IFIOxwwxxStm1RzdwM/pub?output=csv")
                 .then(data => {
@@ -306,15 +360,19 @@
                 }
             });
 
+            // Replace the circle layer with a symbol layer
             map.addLayer({
                 id: 'points',
                 source: 'points',
-                type: 'circle',
-                paint: {
-                    'circle-radius': 6,
-                    'circle-color': '#ffa500',
-                    'circle-stroke-width': 1,
-                    'circle-stroke-color': 'white'
+                type: 'symbol',
+                layout: {
+                    'icon-image': [
+                        'concat',
+                        ['get', 'iconType'],
+                        '-icon'
+                    ],
+                    'icon-size': 0.8,
+                    'icon-allow-overlap': true
                 }
             });
 
