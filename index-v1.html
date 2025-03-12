@@ -213,8 +213,10 @@
 
     <script>
         let bounds;
-        const infoDiv = document.getElementById('info');
 
+        
+
+        const infoDiv = document.getElementById('info');
         const appData = {
             points: [],
         };
@@ -256,6 +258,22 @@
 
                             bounds.extend([lon, lat]);
 
+
+                            const adult = row["Program Population (choice=Adult)"];
+                            const both = row["Program Population (choice=Both)"];
+                            const pediatric = row["Program Population (choice=Pediatric)"];
+
+                            let iconType = 'circle';
+                            if (both === "Checked") {
+                                iconType = 'triangle'
+                            }
+                            if (pediatric === "Checked") {
+                                iconType = 'circle'
+                            }
+                            if (adult === "Checked") {
+                                iconType = 'square'
+                            }
+
                             return {
                                 type: 'Feature',
                                 geometry: {
@@ -263,7 +281,8 @@
                                     coordinates: [lon, lat]
                                 },
                                 properties: {
-                                    ...row
+                                    ...row,
+                                    iconType
                                 }
                             }
                         });
