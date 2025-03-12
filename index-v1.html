@@ -278,6 +278,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Program Setting filter section -->
+                <div class="filter-section">
+                    <h4>Program Setting</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-other" value="other" checked />
+                            <label for="filter-other">Other</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-rural" value="rural" checked />
+                            <label for="filter-rural">Rural</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-suburban" value="suburban" checked />
+                            <label for="filter-suburban">Suburban</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-urban" value="urban" checked />
+                            <label for="filter-urban">Urban</label>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="info"></div>
             <div id="map"></div>
@@ -607,6 +630,21 @@
                     if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
                     if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
 
+                    // Check program settings
+                    const props = point.properties;
+                    let hasMatchingSetting = false;
+                    const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
+                    const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
+                    const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
+                    const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
+
+                    if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
+                    if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
+                    if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
+                    if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
+
+                    if (!hasMatchingSetting) return false;
+
                     return true;
                 });
 
@@ -679,7 +717,8 @@
 
         // Add filter functionality
         let activeFilters = {
-            population: ['both', 'pediatric', 'adult']
+            population: ['both', 'pediatric', 'adult'],
+            setting: ['other', 'rural', 'suburban', 'urban']
         };
 
         function setupFilters() {
@@ -694,6 +733,23 @@
 
             document.getElementById('filter-adult').addEventListener('change', function (e) {
                 updateFilter('population', 'adult', e.target.checked);
+            });
+
+            // Setting filter checkboxes
+            document.getElementById('filter-other').addEventListener('change', function (e) {
+                updateFilter('setting', 'other', e.target.checked);
+            });
+
+            document.getElementById('filter-rural').addEventListener('change', function (e) {
+                updateFilter('setting', 'rural', e.target.checked);
+            });
+
+            document.getElementById('filter-suburban').addEventListener('change', function (e) {
+                updateFilter('setting', 'suburban', e.target.checked);
+            });
+
+            document.getElementById('filter-urban').addEventListener('change', function (e) {
+                updateFilter('setting', 'urban', e.target.checked);
             });
         }
 
@@ -720,6 +776,22 @@
                 if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
                 if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
 
+                // Check program settings
+                let hasMatchingSetting = false;
+                const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
+                const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
+                const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
+                const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
+
+                // If any setting filter matches, show the point
+                if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
+                if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
+                if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
+                if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
+
+                // If no setting matches our filters, exclude this point
+                if (!hasMatchingSetting) return false;
+
                 return true;
             });
 
@@ -729,6 +801,69 @@
                 features: filteredPoints
             });
 
+            // Update the sidebar with filtered points that are in the current view
+            const currentBounds = map.getBounds();
+            const bbox = [
+                currentBounds.getWest(),
+                currentBounds.getSouth(),
+                currentBounds.getEast(),
+                currentBounds.getNorth()
+            ];
+            const bboxPolygon = turf.bboxPolygon(bbox);
+
+            const visibleFilteredPoints = filteredPoints.filter(point => {
+                return turf.booleanPointInPolygon(point, bboxPolygon);
+            });
+
+            if (visibleFilteredPoints.length > 0) {
+                generateItems(visibleFilteredPoints);
+            } else {
+                infoDiv.innerHTML = '';
+                infoDiv.appendChild(resetView());
+            }
+        }
+
+        function filterByBounds(bounds) {
+            // Create a polygon from the current bounds
+            const bbox = [
+                bounds.getWest(),
+                bounds.getSouth(),
+                bounds.getEast(),
+                bounds.getNorth(),
+            ];
+            const bboxPolygon = turf.bboxPolygon(bbox);
+
+            // Apply both bounds filter and active filters
+            const visiblePoints = appData.points.filter((point) => {
+                if (!turf.booleanPointInPolygon(point, bboxPolygon)) {
+                    return false;
+                }
+
+                // Check population filter
+                const iconType = point.properties.iconType;
+                if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
+                if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
+                if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
+
+                // Check program settings
+                const props = point.properties;
+                let hasMatchingSetting = false;
+                const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
+                const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
+                const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
+                const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
+
+                if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
+                if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
+                if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
+                if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
+
+                if (!hasMatchingSetting) return false;
+
+                return true;
+            });
+
+            // ...existing code...
         }
     </script>
 </body>
