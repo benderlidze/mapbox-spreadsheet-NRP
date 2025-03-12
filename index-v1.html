@@ -1,559 +1,530 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <title>Style circles with a data-driven property</title>
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <link
-      href="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.min.css"
-      rel="stylesheet"
-    />
-    <script
-      id="search-js"
-      defer=""
-      src="https://api.mapbox.com/search-js/v1.0.0/web.js"
-    ></script>
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-      rel="stylesheet"
-    />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.min.css" rel="stylesheet" />
+    <script id="search-js" defer="" src="https://api.mapbox.com/search-js/v1.0.0/web.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
     <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-      #map {
-        flex: 1;
-      }
+        #map {
+            flex: 1;
+        }
 
-      .mapboxgl-popup.mapboxgl-popup-anchor-top {
-        max-width: 400px !important;
-      }
+        .mapboxgl-popup.mapboxgl-popup-anchor-top {
+            max-width: 400px !important;
+        }
 
-      .main {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-      }
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-      #content-container {
-        display: flex;
-        flex-direction: row;
-        flex: 1;
-        overflow: hidden;
-      }
+        #content-container {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow: hidden;
+        }
 
-      #info {
-        display: flex;
-        flex-direction: column;
-        width: 30%;
-        padding: 20px;
-        background: white;
-        overflow-y: auto;
-        box-shadow: 0 0px 15px rgba(0, 0, 0, 0.5);
-        z-index: 1;
-      }
+        #info {
+            display: flex;
+            flex-direction: column;
+            width: 30%;
+            padding: 20px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
 
-      .location-item {
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 8px;
-        background: #ffffff;
-        box-shadow: 0 0px 15px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        overflow-x: clip;
-      }
+        .location-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow-x: clip;
+        }
 
-      .location-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      }
+        .location-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
 
-      .location-name {
-        margin: 0 0 8px 0;
-        font-size: 18px;
-        color: #333;
-        font-weight: 600;
-        word-break: break-all;
-      }
+        .location-name {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+            word-break: break-all;
+        }
 
-      .location-detail {
-        margin: 4px 0;
-        color: #666;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        word-break: break-all;
-      }
+        .location-detail {
+            margin: 4px 0;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            word-break: break-all;
+        }
 
-      .location-detail svg {
-        margin-right: 8px;
-        width: 16px;
-        height: 16px;
-      }
+        .location-detail svg {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
 
-      .priority-tag {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-        background: #e3f2fd;
-        color: #1976d2;
-      }
+        .priority-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
 
-      /* New style for search control */
-      .mapboxgl-ctrl.mapboxgl-ctrl-group {
-        width: 100% !important;
-        padding: 5px !important;
-        box-sizing: border-box;
-      }
+        /* New style for search control */
+        .mapboxgl-ctrl.mapboxgl-ctrl-group {
+            width: 100% !important;
+            padding: 5px !important;
+            box-sizing: border-box;
+        }
 
-      .btn {
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        margin-top: 20px;
-        width: 100%;
-      }
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 100%;
+        }
 
-      /* Splash screen styles */
-      #splash-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.85);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        padding: 20px;
-        box-sizing: border-box;
-        color: white;
-        transition: opacity 0.5s ease;
-      }
+        /* Splash screen styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
 
-      #splash-content {
-        background-color: #fff;
-        padding: 10px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        z-index: 111;
-      }
+        #splash-content {
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 111;
+        }
 
-      #splash-content h2 {
-        color: #007bff;
-        margin-top: 0;
-        font-size: 24px;
-        margin-bottom: 20px;
-      }
+        #splash-content h2 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
 
-      #splash-content p {
-        font-size: 12px;
-      }
+        #splash-content p {
+            font-size: 12px;
+        }
 
-      #splash-content a {
-        color: #007bff;
-        text-decoration: underline;
-      }
+        #splash-content a {
+            color: #007bff;
+            text-decoration: underline;
+        }
 
-      #splash-close {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 30px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
+        #splash-close {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
 
-      #splash-close:hover {
-        background-color: #0056b3;
-      }
+        #splash-close:hover {
+            background-color: #0056b3;
+        }
 
-      .title {
-        font-weight: bold;
-      }
+        .title {
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
     </style>
-  </head>
+</head>
 
-  <body>
+<body>
     <div class="main">
-      <div id="splash-content">
-        <div style="text-align: center">
-          <h2>Gun Violence Prevention Program National Repository</h2>
+        <div id="splash-content">
+            <div style="text-align: center">
+                <h2>Gun Violence Prevention Program National Repository</h2>
+            </div>
+            <div>
+                <p>
+                    Launched in 2021 and hosted by Northwell Health, the
+                    <a href="https://www.northwell.edu/center-for-gun-violence-prevention/learning-collaborative-for-health-systems-and-hospitals"
+                        target="_blank">Gun Violence Prevention Learning Collaborative for Health Systems
+                        and Hospitals</a>
+                    is a grassroots action-oriented initiative that offers health care
+                    professionals the space to have open dialogue about the impact of
+                    gun violence, share resources and best practices, and collectively
+                    take action.
+                </p>
+                <p>
+                    Below is a repository of national firearm injury prevention
+                    initiatives and programs to allow members to easily showcase their
+                    work or network with one another to leverage the experiences of
+                    others to build new programs.
+                </p>
+                <p>
+                    To have your program listed, kindly complete the
+                    <a href="https://redcap.link/GVPrepository" target="_blank">following form</a>. If your program is
+                    already listed and you'd like edits made,
+                    please email:
+                    <a href="mailto:CGVP@northwell.edu">CGVP@northwell.edu</a>.
+                </p>
+            </div>
         </div>
-        <div>
-          <p>
-            Launched in 2021 and hosted by Northwell Health, the
-            <a
-              href="https://www.northwell.edu/center-for-gun-violence-prevention/learning-collaborative-for-health-systems-and-hospitals"
-              target="_blank"
-              >Gun Violence Prevention Learning Collaborative for Health Systems
-              and Hospitals</a
-            >
-            is a grassroots action-oriented initiative that offers health care
-            professionals the space to have open dialogue about the impact of
-            gun violence, share resources and best practices, and collectively
-            take action.
-          </p>
-          <p>
-            Below is a repository of national firearm injury prevention
-            initiatives and programs to allow members to easily showcase their
-            work or network with one another to leverage the experiences of
-            others to build new programs.
-          </p>
-          <p>
-            To have your program listed, kindly complete the
-            <a href="https://redcap.link/GVPrepository" target="_blank"
-              >following form</a
-            >. If your program is already listed and you'd like edits made,
-            please email:
-            <a href="mailto:CGVP@northwell.edu">CGVP@northwell.edu</a>.
-          </p>
+        <div id="content-container">
+            <div id="info"></div>
+            <div id="map"></div>
         </div>
-      </div>
-      <div id="content-container">
-        <div id="info"></div>
-        <div id="map"></div>
-      </div>
     </div>
 
     <!-- Add hidden SVG icons for conversion -->
-  
 
-    <div id="map-legend" style="position: absolute; bottom: 30px; right: 30px; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1;">
-      <h4 style="margin: 0 0 10px 0;">Program Population</h4>
-      <div style="display: flex; align-items: center; margin: 5px 0;">
-        <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
-            <circle
-              cx="15"
-              cy="15"
-              r="12"
-              fill="red"
-              stroke="white"
-              stroke-width="2"
-            ></circle>
-          </svg>
-        <span style="margin-left: 8px">Pediatric</span>
-      </div>
-      <div style="display: flex; align-items: center; margin: 5px 0;">
-        <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
-            <rect
-              x="3"
-              y="3"
-              width="24"
-              height="24"
-              fill="green"
-              stroke="white"
-              stroke-width="2"
-            ></rect>
-          </svg>
-        <span style="margin-left: 8px">Adult</span>
-      </div>
-      <div style="display: flex; align-items: center; margin: 5px 0;">
-        <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
-            <polygon
-              points="15,3 27,27 3,27"
-              fill="orange"
-              stroke="white"
-              stroke-width="2"
-            ></polygon>
-          </svg>
-        <span style="margin-left: 8px">Both</span>
-      </div>
-    </div></div>
+
+    <div id="map-legend"
+        style="position: absolute; bottom: 30px; right: 30px; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1;">
+        <h4 style="margin: 0 0 10px 0;">Program Population</h4>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+                <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+            </svg>
+            <span style="margin-left: 8px">Pediatric</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
+                <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2"></rect>
+            </svg>
+            <span style="margin-left: 8px">Adult</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
+                <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2"></polygon>
+            </svg>
+            <span style="margin-left: 8px">Both</span>
+        </div>
+    </div>
+    </div>
 
     <script>
-      let bounds;
+        let bounds;
 
-      // Function to convert SVG to image
-      function svgToImage(svgElement, callback) {
-        const svgString = new XMLSerializer().serializeToString(svgElement);
-        const svg64 = btoa(svgString);
-        const image = new Image();
-        image.onload = function () {
-          const canvas = document.createElement("canvas");
-          canvas.width = 30; // Match SVG width
-          canvas.height = 30; // Match SVG height
-          const context = canvas.getContext("2d");
-          context.drawImage(image, 0, 0);
-          callback(canvas.toDataURL("image/png"));
-        };
-        image.src = "data:image/svg+xml;base64," + svg64;
-      }
-
-      const infoDiv = document.getElementById("info");
-      const appData = {
-        points: [],
-        icons: {},
-      };
-
-      mapboxgl.accessToken =
-        "pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw";
-      const map = new mapboxgl.Map({
-        container: "map",
-        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-        style: "mapbox://styles/mapbox/light-v11",
-        zoom: 2,
-        center: { lng: -0.02665959675479712, lat: 2 },
-        projection: "mercator",
-      });
-
-      window.addEventListener("load", () => {
-        const searchBox = new MapboxSearchBox();
-        searchBox.accessToken = mapboxgl.accessToken;
-        searchBox.marker = true;
-        searchBox.mapboxgl = mapboxgl;
-        map.addControl(searchBox);
-      });
-
-      map.on("load", () => {
-        // Convert SVG icons to images
-        svgToImage(document.getElementById("circle-icon"), function (dataUrl) {
-          appData.icons.circle = dataUrl;
-          const circleImage = new Image();
-          circleImage.onload = function () {
-            map.addImage("circle-icon", circleImage);
-          };
-          circleImage.src = dataUrl;
-        });
-
-        svgToImage(document.getElementById("square-icon"), function (dataUrl) {
-          appData.icons.square = dataUrl;
-          const squareImage = new Image();
-          squareImage.onload = function () {
-            map.addImage("square-icon", squareImage);
-          };
-          squareImage.src = dataUrl;
-        });
-
-        svgToImage(
-          document.getElementById("triangle-icon"),
-          function (dataUrl) {
-            appData.icons.triangle = dataUrl;
-            const triangleImage = new Image();
-            triangleImage.onload = function () {
-              map.addImage("triangle-icon", triangleImage);
+        // Function to convert SVG to image
+        function svgToImage(svgElement, callback) {
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svg64 = btoa(svgString);
+            const image = new Image();
+            image.onload = function () {
+                const canvas = document.createElement("canvas");
+                canvas.width = 30; // Match SVG width
+                canvas.height = 30; // Match SVG height
+                const context = canvas.getContext("2d");
+                context.drawImage(image, 0, 0);
+                callback(canvas.toDataURL("image/png"));
             };
-            triangleImage.src = dataUrl;
-          }
-        );
+            image.src = "data:image/svg+xml;base64," + svg64;
+        }
 
-        d3.csv(
-          "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5drxX_4NdOfkaLppzMqDkM102yvZPMGPUFrW8IFuN2v78Tv2142-kI4lgS6IFIOxwwxxStm1RzdwM/pub?output=csv"
-        ).then((data) => {
-          console.log(data);
+        const infoDiv = document.getElementById("info");
+        const appData = {
+            points: [],
+            icons: {},
+        };
 
-          bounds = new mapboxgl.LngLatBounds();
+        mapboxgl.accessToken =
+            "pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw";
+        const map = new mapboxgl.Map({
+            container: "map",
+            // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+            style: "mapbox://styles/mapbox/light-v11",
+            zoom: 2,
+            center: { lng: -0.02665959675479712, lat: 2 },
+            projection: "mercator",
+        });
 
-          const points = data
-            .filter((row) => row["Lat"] !== "" && row["Lon"] !== "")
-            .map((row, index) => {
-              console.log(index, row, row["Lat"], row["Lon"]);
-              const lat = parseFloat(row["Lat"]);
-              const lon = parseFloat(row["Lon"]);
-              console.log("-------");
-              bounds.extend([lon, lat]);
+        window.addEventListener("load", () => {
+            const searchBox = new MapboxSearchBox();
+            searchBox.accessToken = mapboxgl.accessToken;
+            searchBox.marker = true;
+            searchBox.mapboxgl = mapboxgl;
+            map.addControl(searchBox);
+        });
 
-              const adult = row["Program Population (choice=Adult)"];
-              const both = row["Program Population (choice=Both)"];
-              const pediatric = row["Program Population (choice=Pediatric)"];
-
-              let iconType = "circle";
-              if (both === "Checked") {
-                iconType = "triangle";
-              }
-              if (pediatric === "Checked") {
-                iconType = "circle";
-              }
-              if (adult === "Checked") {
-                iconType = "square";
-              }
-
-              const checkedFields = [];
-
-              //   Object.entries(row).forEach(([key, value]) => {
-              //     if (
-              //       value === "Checked" &&
-              //       key.includes("following focus areas does your program fall")
-              //     ) {
-              //       checkedFields.push(key);
-              //     }
-              //   });
-
-              const orgName = row["Name of your organization(s)"];
-              const programName = row["Program Name"];
-              const description = row["Brief Program Description"];
-              const phone = row["Program phone number"];
-              const email = row["Program Email Address(If Applicable)"];
-              const website = row["Website/link to your program:"];
-
-              return {
-                type: "Feature",
-                geometry: {
-                  type: "Point",
-                  coordinates: [lon, lat],
-                },
-                properties: {
-                  ...row,
-                  iconType,
-
-                  orgName,
-                  programName,
-                  description,
-                  phone,
-                  email,
-                  website,
-                },
-              };
+        map.on("load", () => {
+            // Convert SVG icons to images
+            svgToImage(document.getElementById("circle-icon"), function (dataUrl) {
+                appData.icons.circle = dataUrl;
+                const circleImage = new Image();
+                circleImage.onload = function () {
+                    map.addImage("circle-icon", circleImage);
+                };
+                circleImage.src = dataUrl;
             });
 
-          map.fitBounds(bounds, { padding: 150 });
+            svgToImage(document.getElementById("square-icon"), function (dataUrl) {
+                appData.icons.square = dataUrl;
+                const squareImage = new Image();
+                squareImage.onload = function () {
+                    map.addImage("square-icon", squareImage);
+                };
+                squareImage.src = dataUrl;
+            });
 
-          console.log(points);
-          appData.points = points;
-          map.getSource("points").setData({
-            type: "FeatureCollection",
-            features: appData.points,
-          });
-        });
+            svgToImage(
+                document.getElementById("triangle-icon"),
+                function (dataUrl) {
+                    appData.icons.triangle = dataUrl;
+                    const triangleImage = new Image();
+                    triangleImage.onload = function () {
+                        map.addImage("triangle-icon", triangleImage);
+                    };
+                    triangleImage.src = dataUrl;
+                }
+            );
 
-        map.addSource("points", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [],
-          },
-        });
+            d3.csv(
+                "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5drxX_4NdOfkaLppzMqDkM102yvZPMGPUFrW8IFuN2v78Tv2142-kI4lgS6IFIOxwwxxStm1RzdwM/pub?output=csv"
+            ).then((data) => {
+                console.log(data);
 
-        // Replace the circle layer with a symbol layer
-        map.addLayer({
-          id: "points",
-          source: "points",
-          type: "symbol",
-          layout: {
-            "icon-image": ["concat", ["get", "iconType"], "-icon"],
-            "icon-size": 0.8,
-            "icon-allow-overlap": true,
-          },
-        });
+                bounds = new mapboxgl.LngLatBounds();
 
-        map.on("mouseenter", "points", (e) => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-        map.on("mouseleave", "points", (e) => {
-          map.getCanvas().style.cursor = "";
-        });
+                const points = data
+                    .filter((row) => row["Lat"] !== "" && row["Lon"] !== "")
+                    .map((row, index) => {
+                        const lat = parseFloat(row["Lat"]);
+                        const lon = parseFloat(row["Lon"]);
+                        bounds.extend([lon, lat]);
 
-        map.on("click", "points", (e) => {
-          const props = e.features[0].properties;
+                        const adult = row["Program Population (choice=Adult)"];
+                        const both = row["Program Population (choice=Both)"];
+                        const pediatric = row["Program Population (choice=Pediatric)"];
 
-          // The focus areas that is “checked”,
+                        let iconType = "circle";
+                        if (both === "Checked") {
+                            iconType = "triangle";
+                        }
+                        if (pediatric === "Checked") {
+                            iconType = "circle";
+                        }
+                        if (adult === "Checked") {
+                            iconType = "square";
+                        }
 
-          const programName = props["programName"];
-          const description = props["description"];
-          const phone = props["phone"];
-          const email = props["email"];
-          const website = props["website"];
+                        const checkedFields = [];
 
-          const popup = new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(
-              `
+                        Object.entries(row).forEach(([key, value]) => {
+                            if (
+                                value === "Checked" &&
+                                key.includes("following focus areas does your program fall")
+                            ) {
+                                const val = key.split("(choice=")[1].slice(0, -1)
+                                checkedFields.push(val);
+                            }
+                        });
+
+                        console.log('checkedFields', checkedFields);
+
+                        const orgName = row["Name of your organization(s)"];
+                        const programName = row["Program Name"];
+                        const description = row["Brief Program Description"];
+                        const phone = row["Program phone number"];
+                        const email = row["Program Email Address(If Applicable)"];
+                        const website = row["Website/link to your program:"];
+
+                        return {
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [lon, lat],
+                            },
+                            properties: {
+                                ...row,
+                                iconType,
+
+                                orgName,
+                                programName,
+                                description,
+                                phone,
+                                email,
+                                website,
+                                checkedFields: checkedFields.join(", "),
+                            },
+                        };
+                    });
+
+                map.fitBounds(bounds, { padding: 150 });
+
+                console.log(points);
+                appData.points = points;
+                map.getSource("points").setData({
+                    type: "FeatureCollection",
+                    features: appData.points,
+                });
+            });
+
+            map.addSource("points", {
+                type: "geojson",
+                data: {
+                    type: "FeatureCollection",
+                    features: [],
+                },
+            });
+
+            // Replace the circle layer with a symbol layer
+            map.addLayer({
+                id: "points",
+                source: "points",
+                type: "symbol",
+                layout: {
+                    "icon-image": ["concat", ["get", "iconType"], "-icon"],
+                    "icon-size": 0.8,
+                    "icon-allow-overlap": true,
+                },
+            });
+
+            map.on("mouseenter", "points", (e) => {
+                map.getCanvas().style.cursor = "pointer";
+            });
+            map.on("mouseleave", "points", (e) => {
+                map.getCanvas().style.cursor = "";
+            });
+
+            map.on("click", "points", (e) => {
+                const props = e.features[0].properties;
+
+                // The focus areas that is “checked”,
+
+                const programName = props["programName"];
+                const description = props["description"];
+                const phone = props["phone"] ? `Phone: ${props["phone"]}` : "";
+                const email = props["email"] ? `Email: ${props["email"]}` : "";
+                const website = props["website"] ? `Website: ${props["website"]}` : "";
+
+                const checkedFields = props["checkedFields"]
+
+                const popup = new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        `
                     <h3 class="title">${programName}</h3>
                     <div>${description}</div>
-                    <div>Phone: ${phone}</div>
-                    <div>Email: ${email}</div>
-                    <div>Website: ${website}</div>
-
-
+                    <div>${phone}</div>
+                    <div>${email}</div>
+                    <div>${website}</div>
+                    
+                    <div style="font-weight:bold;padding-top:10px;">${checkedFields}</div>
                   `
-            )
-            .addTo(map);
-        });
+                    )
+                    .addTo(map);
+            });
 
-        map.on("moveend", () => {
-          filterByBounds(map.getBounds());
-        });
+            map.on("moveend", () => {
+                filterByBounds(map.getBounds());
+            });
 
-        function filterByBounds(bounds) {
-          // Create a polygon from the current bounds
-          const bbox = [
-            bounds.getWest(),
-            bounds.getSouth(),
-            bounds.getEast(),
-            bounds.getNorth(),
-          ];
-          const bboxPolygon = turf.bboxPolygon(bbox);
+            function filterByBounds(bounds) {
+                // Create a polygon from the current bounds
+                const bbox = [
+                    bounds.getWest(),
+                    bounds.getSouth(),
+                    bounds.getEast(),
+                    bounds.getNorth(),
+                ];
+                const bboxPolygon = turf.bboxPolygon(bbox);
 
-          const visiblePoints = appData.points.filter((point) => {
-            return turf.booleanPointInPolygon(point, bboxPolygon);
-          });
+                const visiblePoints = appData.points.filter((point) => {
+                    return turf.booleanPointInPolygon(point, bboxPolygon);
+                });
 
-          console.log("visiblePoints.length", visiblePoints.length);
+                console.log("visiblePoints.length", visiblePoints.length);
 
-          if (visiblePoints.length > 0) {
-            generateItems(visiblePoints);
-          } else {
-            infoDiv.innerHTML = "";
-            infoDiv.appendChild(resetView());
-          }
-        }
+                if (visiblePoints.length > 0) {
+                    generateItems(visiblePoints);
+                } else {
+                    infoDiv.innerHTML = "";
+                    infoDiv.appendChild(resetView());
+                }
+            }
 
-        function resetView() {
-          const div = document.createElement("div");
+            function resetView() {
+                const div = document.createElement("div");
 
-          const span = document.createElement("span");
-          span.innerHTML = "There are no items in this view.";
+                const span = document.createElement("span");
+                span.innerHTML = "There are no items in this view.";
 
-          const button = document.createElement("button");
-          button.className = "btn";
-          button.innerHTML = "Reset View";
-          button.onclick = () => {
-            map.fitBounds(bounds, { padding: 50 });
-          };
+                const button = document.createElement("button");
+                button.className = "btn";
+                button.innerHTML = "Reset View";
+                button.onclick = () => {
+                    map.fitBounds(bounds, { padding: 50 });
+                };
 
-          div.appendChild(span);
-          div.appendChild(button);
+                div.appendChild(span);
+                div.appendChild(button);
 
-          return div;
-        }
-        // 1. Can we add filters so that individuals using this map can filter to any of the following criterions: "Program population" (columns P, Q, R), and/or "Program Setting" (columns S, T, U), and/or "Which of the following focus areas does your program fall under?" (columns X, Y, Z, AA, AB, AC)
-        // 2. Can we have the dot shapes correspond to Program population, whereas circle dots would be for "pediatric", square dots would be for "adults", and triangle dots would be for "both"? Can we also make sure there is a label somewhere visible so individuals know what dots corresponds to which category?
-        // 3. Can the information that shows up on the left side bar be update to show the following: "Name of your organization", "Program Name", and "Brief Program Description"?
-        // 4. When someone clicks on a specific dot, can the following information display in t
+                return div;
+            }
+            // 1. Can we add filters so that individuals using this map can filter to any of the following criterions: "Program population" (columns P, Q, R), and/or "Program Setting" (columns S, T, U), and/or "Which of the following focus areas does your program fall under?" (columns X, Y, Z, AA, AB, AC)
+            // 2. Can we have the dot shapes correspond to Program population, whereas circle dots would be for "pediatric", square dots would be for "adults", and triangle dots would be for "both"? Can we also make sure there is a label somewhere visible so individuals know what dots corresponds to which category?
+            // 3. Can the information that shows up on the left side bar be update to show the following: "Name of your organization", "Program Name", and "Brief Program Description"?
+            // 4. When someone clicks on a specific dot, can the following information display in t
 
-        function generateItems(itemsArray) {
-          infoDiv.innerHTML = "";
+            function generateItems(itemsArray) {
+                infoDiv.innerHTML = "";
 
-          itemsArray.forEach((item) => {
-            const props = item.properties;
+                itemsArray.forEach((item) => {
+                    const props = item.properties;
 
-            const orgName = props["orgName"];
-            const programName = props["programName"];
-            const description = props["description"];
+                    const orgName = props["orgName"];
+                    const programName = props["programName"];
+                    const description = props["description"];
 
-            const div = document.createElement("div");
-            div.className = "location-item";
-            div.innerHTML = `
+                    const div = document.createElement("div");
+                    div.className = "location-item";
+                    div.innerHTML = `
                       <h3 class="location-name">${orgName}</h3>
                       <div class="location-detail">
                           ${programName}
@@ -563,17 +534,18 @@
                       </div>
                   `;
 
-            div.addEventListener("click", () => {
-              map.flyTo({
-                center: item.geometry.coordinates,
-                zoom: 12,
-              });
-            });
+                    div.addEventListener("click", () => {
+                        map.flyTo({
+                            center: item.geometry.coordinates,
+                            zoom: 12,
+                        });
+                    });
 
-            infoDiv.appendChild(div);
-          });
-        }
-      });
+                    infoDiv.appendChild(div);
+                });
+            }
+        });
     </script>
-  </body>
+</body>
+
 </html>
