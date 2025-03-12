@@ -328,6 +328,13 @@
                                 iconType = 'square'
                             }
 
+                            const orgName = row['Name of your organization(s)']
+                            const programName = row['Program Name']
+                            const description = row['Brief Program Description']
+                            const phone = row['Program phone number']
+                            const email = row['Program Email Address(If Applicable)']
+                            const website = row['Website/link to your program:']
+
                             return {
                                 type: 'Feature',
                                 geometry: {
@@ -336,7 +343,14 @@
                                 },
                                 properties: {
                                     ...row,
-                                    iconType
+                                    iconType,
+
+                                    orgName,
+                                    programName,
+                                    description,
+                                    phone,
+                                    email,
+                                    website
                                 }
                             }
                         });
@@ -449,6 +463,10 @@
                 return div;
 
             }
+            // 1. Can we add filters so that individuals using this map can filter to any of the following criterions: "Program population" (columns P, Q, R), and/or "Program Setting" (columns S, T, U), and/or "Which of the following focus areas does your program fall under?" (columns X, Y, Z, AA, AB, AC)
+            // 2. Can we have the dot shapes correspond to Program population, whereas circle dots would be for "pediatric", square dots would be for "adults", and triangle dots would be for "both"? Can we also make sure there is a label somewhere visible so individuals know what dots corresponds to which category?
+            // 3. Can the information that shows up on the left side bar be update to show the following: "Name of your organization", "Program Name", and "Brief Program Description"?
+            // 4. When someone clicks on a specific dot, can the following information display in the pop up box: Program Name, Brief Program Description, Program phone number, Program Email, The focus areas that is “checked”, and website?
 
             function generateItems(itemsArray) {
 
@@ -458,23 +476,19 @@
 
                     const props = item.properties;
 
-                    const name = props['First Name'] + ' ' + props['Last Name'];
-                    const email = props['Email address'];
-                    const address = props['Program City'] + ', ' + props['Program State'] + ', ' + props['Program Zip Code'];
+                    const orgName = props['orgName'];
+                    const programName = props['programName'];
+                    const description = props['description'];
 
                     const div = document.createElement('div');
                     div.className = 'location-item';
                     div.innerHTML = `
-                        <h3 class="location-name">${name}</h3>
+                        <h3 class="location-name">${orgName}</h3>
                         <div class="location-detail">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            ${address}
+                            ${programName}
                         </div>
                         <div class="location-detail">
-                            <span class="priority-tag">${email}</span>
+                            <span class="priority-tag">${description}</span>
                         </div>
                     `;
 
