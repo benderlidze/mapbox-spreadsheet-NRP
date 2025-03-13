@@ -649,77 +649,7 @@
                     .addTo(map);
             });
 
-            map.on("moveend", () => {
-                filterByBounds(map.getBounds());
-            });
 
-            function filterByBounds(bounds) {
-                // Create a polygon from the current bounds
-                const bbox = [
-                    bounds.getWest(),
-                    bounds.getSouth(),
-                    bounds.getEast(),
-                    bounds.getNorth(),
-                ];
-                const bboxPolygon = turf.bboxPolygon(bbox);
-
-                // Apply both bounds filter and active filters
-                const visiblePoints = appData.points.filter((point) => {
-                    if (!turf.booleanPointInPolygon(point, bboxPolygon)) {
-                        return false;
-                    }
-
-                    // Check population filter
-                    const iconType = point.properties.iconType;
-                    if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
-                    if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
-                    if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
-
-                    // Check program settings
-                    const props = point.properties;
-                    let hasMatchingSetting = false;
-                    const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
-                    const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
-                    const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
-                    const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
-
-                    if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
-                    if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
-                    if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
-                    if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
-
-                    if (!hasMatchingSetting) return false;
-
-                    // Check focus areas
-                    let hasMatchingFocusArea = false;
-                    const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
-                    const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
-                    const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
-                    const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
-                    const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
-                    const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
-
-                    if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
-                    if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
-                    if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
-                    if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
-                    if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
-                    if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
-
-                    if (!hasMatchingFocusArea) return false;
-
-                    return true;
-                });
-
-                console.log("visiblePoints.length", visiblePoints.length);
-
-                if (visiblePoints.length > 0) {
-                    generateItems(visiblePoints);
-                } else {
-                    infoDiv.innerHTML = "";
-                    infoDiv.appendChild(resetView());
-                }
-            }
         });
 
         // Add filter functionality
@@ -776,15 +706,28 @@
         }
 
         function applyFilters() {
+            console.log('appData.points', appData.points);
+            console.log('activeFilters', activeFilters);
+
             // Filter the points based on active filters
             const filteredPoints = appData.points.filter(point => {
                 const props = point.properties;
-                const iconType = props.iconType;
 
                 // Check if the population type matches active filters
-                if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
-                if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
-                if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
+                let hasMatchingPopulation = false;
+                const adultPop = props["Program Population (choice=Adult)"] === "Checked";
+                const bothPop = props["Program Population (choice=Both)"] === "Checked";
+                const pediatricPop = props["Program Population (choice=Pediatric)"] === "Checked";
+
+
+                // If any population filter matches, show the point
+                if (adultPop && activeFilters.population.includes('adult')) hasMatchingPopulation = true;
+                if (bothPop && activeFilters.population.includes('both')) hasMatchingPopulation = true;
+                if (pediatricPop && activeFilters.population.includes('pediatric')) hasMatchingPopulation = true;
+
+                console.log('props["Program Population (choice=Pediatric)"]', props["Program Population (choice=Pediatric)"], hasMatchingPopulation);
+                // If no population matches our filters, exclude this point
+                if (!hasMatchingPopulation) return false;
 
                 // Check program settings
                 let hasMatchingSetting = false;
@@ -825,6 +768,8 @@
                 return true;
             });
 
+            console.log('filteredPoints', filteredPoints);
+
             // Update the map with filtered points
             map.getSource('points').setData({
                 type: 'FeatureCollection',
@@ -842,7 +787,8 @@
             const bboxPolygon = turf.bboxPolygon(bbox);
 
             const visibleFilteredPoints = filteredPoints.filter(point => {
-                return turf.booleanPointInPolygon(point, bboxPolygon);
+                return true;
+                //return turf.booleanPointInPolygon(point, bboxPolygon);
             });
 
             if (visibleFilteredPoints.length > 0) {
@@ -853,66 +799,6 @@
             }
         }
 
-        function filterByBounds(bounds) {
-            // Create a polygon from the current bounds
-            const bbox = [
-                bounds.getWest(),
-                bounds.getSouth(),
-                bounds.getEast(),
-                bounds.getNorth(),
-            ];
-            const bboxPolygon = turf.bboxPolygon(bbox);
-
-            // Apply both bounds filter and active filters
-            const visiblePoints = appData.points.filter((point) => {
-                if (!turf.booleanPointInPolygon(point, bboxPolygon)) {
-                    return false;
-                }
-
-                // Check population filter
-                const iconType = point.properties.iconType;
-                if (iconType === 'triangle' && !activeFilters.population.includes('both')) return false;
-                if (iconType === 'circle' && !activeFilters.population.includes('pediatric')) return false;
-                if (iconType === 'square' && !activeFilters.population.includes('adult')) return false;
-
-                // Check program settings
-                const props = point.properties;
-                let hasMatchingSetting = false;
-                const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
-                const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
-                const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
-                const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
-
-                if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
-                if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
-                if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
-                if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
-
-                if (!hasMatchingSetting) return false;
-
-                // Check focus areas
-                let hasMatchingFocusArea = false;
-                const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
-                const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
-                const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
-                const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
-                const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
-                const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
-
-                if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
-                if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
-                if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
-                if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
-                if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
-                if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
-
-                if (!hasMatchingFocusArea) return false;
-
-                return true;
-            });
-
-            // ...existing code...
-        }
     </script>
 </body>
 
