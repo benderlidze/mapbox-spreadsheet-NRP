@@ -294,6 +294,12 @@
                             </svg>
                             <label for="filter-adult">Adult</label>
                         </div>
+
+                        <svg id="square-gray" width="20" height="20" viewBox="0 0 30 30">
+                            <rect x="3" y="3" width="24" height="24" fill="gray" stroke="white" stroke-width="2">
+                            </rect>
+                        </svg>
+
                     </div>
                 </div>
 
@@ -482,7 +488,6 @@
         map.on("load", () => {
             // Convert SVG icons to images
             svgToImage(document.getElementById("circle-icon"), function (dataUrl) {
-                appData.icons.circle = dataUrl;
                 const circleImage = new Image();
                 circleImage.onload = function () {
                     map.addImage("circle-icon", circleImage);
@@ -491,7 +496,6 @@
             });
 
             svgToImage(document.getElementById("square-icon"), function (dataUrl) {
-                appData.icons.square = dataUrl;
                 const squareImage = new Image();
                 squareImage.onload = function () {
                     map.addImage("square-icon", squareImage);
@@ -502,12 +506,21 @@
             svgToImage(
                 document.getElementById("triangle-icon"),
                 function (dataUrl) {
-                    appData.icons.triangle = dataUrl;
                     const triangleImage = new Image();
                     triangleImage.onload = function () {
                         map.addImage("triangle-icon", triangleImage);
                     };
                     triangleImage.src = dataUrl;
+                }
+            );
+            svgToImage(
+                document.getElementById("square-gray"),
+                function (dataUrl) {
+                    const IconImage = new Image();
+                    IconImage.onload = function () {
+                        map.addImage("square-gray-icon", IconImage);
+                    };
+                    IconImage.src = dataUrl;
                 }
             );
 
@@ -526,19 +539,23 @@
                         bounds.extend([lon, lat]);
 
                         const adult = row["Program Population (choice=Adult)"];
-                        const both = row["Program Population (choice=Both)"];
                         const pediatric = row["Program Population (choice=Pediatric)"];
+                        const both = row["Program Population (choice=Both)"];
 
-                        let iconType = "circle";
-                        if (both === "Checked") {
-                            iconType = "triangle";
-                        }
+                        let iconType = "square-gray"; //empty values 
+
                         if (pediatric === "Checked") {
                             iconType = "circle";
                         }
                         if (adult === "Checked") {
                             iconType = "square";
                         }
+                        if (both === "Checked") {
+                            iconType = "triangle";
+                            row["Program Population (choice=Adult)"] = "Checked";
+                            row["Program Population (choice=Pediatric)"] = "Checked";
+                        }
+
 
                         const checkedFields = [];
 
@@ -716,14 +733,15 @@
                 // Check if the population type matches active filters
                 let hasMatchingPopulation = false;
                 const adultPop = props["Program Population (choice=Adult)"] === "Checked";
-                const bothPop = props["Program Population (choice=Both)"] === "Checked";
                 const pediatricPop = props["Program Population (choice=Pediatric)"] === "Checked";
+                const bothPop = props["Program Population (choice=Both)"] === "Checked";
 
 
                 // If any population filter matches, show the point
                 if (adultPop && activeFilters.population.includes('adult')) hasMatchingPopulation = true;
-                if (bothPop && activeFilters.population.includes('both')) hasMatchingPopulation = true;
                 if (pediatricPop && activeFilters.population.includes('pediatric')) hasMatchingPopulation = true;
+                if (bothPop && activeFilters.population.includes('both')) hasMatchingPopulation = true;
+
 
                 console.log('props["Program Population (choice=Pediatric)"]', props["Program Population (choice=Pediatric)"], hasMatchingPopulation);
                 // If no population matches our filters, exclude this point
