@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Style circles with a data-driven property</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link href="https://api.mapbox.com/mapbox-assembly/v1.3.0/assembly.min.css" rel="stylesheet" />
+    <script id="search-js" defer="" src="https://api.mapbox.com/search-js/v1.0.0/web.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            flex: 1;
+        }
+
+        .mapboxgl-popup.mapboxgl-popup-anchor-top {
+            max-width: 400px !important;
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #content-container {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #content-container * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #info {
+            display: flex;
+            flex-direction: column;
+            width: 30%;
+            padding: 20px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .location-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 0px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow-x: clip;
+        }
+
+        .location-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .location-name {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .location-detail {
+            margin: 4px 0;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            word-break: break-all;
+        }
+
+        .location-detail svg {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .priority-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* New style for search control */
+        .mapboxgl-ctrl.mapboxgl-ctrl-group {
+            width: 100% !important;
+            padding: 5px !important;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* Splash screen styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+
+        #splash-content {
+            background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 111;
+        }
+
+        #splash-content h2 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #splash-content p {
+            font-size: 12px;
+        }
+
+        #splash-content a {
+            color: #007bff;
+            text-decoration: underline;
+        }
+
+        #splash-close {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #splash-close:hover {
+            background-color: #0056b3;
+        }
+
+        .title {
+            font-weight: bold;
+            padding-bottom: 10px;
+        }
+
+        /* Filter styles */
+        #filters-container {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+
+        .filter-section {
+            margin-bottom: 8px;
+        }
+
+        .filter-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-option input {
+            margin-right: 4px;
+        }
+
+        .filter-option label {
+            font-size: 13px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main">
+        <div id="splash-content">
+            <div style="text-align: center">
+                <h2>Gun Violence Prevention Program National Repository</h2>
+            </div>
+            <div>
+                <p>
+                    Launched in 2021 and hosted by Northwell Health, the
+                    <a href="https://www.northwell.edu/center-for-gun-violence-prevention/learning-collaborative-for-health-systems-and-hospitals"
+                        target="_blank">Gun Violence Prevention Learning Collaborative for Health Systems
+                        and Hospitals</a>
+                    is a grassroots action-oriented initiative that offers health care
+                    professionals the space to have open dialogue about the impact of
+                    gun violence, share resources and best practices, and collectively
+                    take action.
+                </p>
+                <p>
+                    Below is a repository of national firearm injury prevention
+                    initiatives and programs to allow members to easily showcase their
+                    work or network with one another to leverage the experiences of
+                    others to build new programs.
+                </p>
+                <p>
+                    To have your program listed, kindly complete the
+                    <a href="https://redcap.link/GVPrepository" target="_blank">following form</a>. If your program is
+                    already listed and you'd like edits made,
+                    please email:
+                    <a href="mailto:CGVP@northwell.edu">CGVP@northwell.edu</a>.
+                </p>
+            </div>
+        </div>
+        <div id="content-container">
+            <!-- Add filter controls -->
+            <div id="filters-container">
+                <div class="filter-section">
+                    <h4>Program Population</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-both" value="both" checked />
+                            <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2">
+                                </polygon>
+                            </svg>
+                            <label for="filter-both">Both</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-pediatric" value="pediatric" checked />
+                            <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+                            </svg>
+                            <label for="filter-pediatric">Pediatric</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-adult" value="adult" checked />
+                            <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
+                                <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2">
+                                </rect>
+                            </svg>
+                            <label for="filter-adult">Adult</label>
+                        </div>
+
+                        <svg id="square-gray" width="20" height="20" viewBox="0 0 30 30">
+                            <rect x="3" y="3" width="24" height="24" fill="gray" stroke="white" stroke-width="2">
+                            </rect>
+                        </svg>
+
+                    </div>
+                </div>
+
+                <!-- Add Program Setting filter section -->
+                <div class="filter-section">
+                    <h4>Program Setting</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-other" value="other" checked />
+                            <label for="filter-other">Other</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-rural" value="rural" checked />
+                            <label for="filter-rural">Rural</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-suburban" value="suburban" checked />
+                            <label for="filter-suburban">Suburban</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-urban" value="urban" checked />
+                            <label for="filter-urban">Urban</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Focus Areas filter section -->
+                <div class="filter-section">
+                    <h4>Focus Areas</h4>
+                    <div class="filter-options">
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-suicide-prevention" value="suicide-prevention" checked />
+                            <label for="filter-suicide-prevention">Firearm Suicide Prevention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-hospital-based" value="hospital-based" checked />
+                            <label for="filter-hospital-based">Hospital-Based Violence Intervention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-data-surveillance" value="data-surveillance" checked />
+                            <label for="filter-data-surveillance">Data Surveillance</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-screening" value="screening" checked />
+                            <label for="filter-screening">Screening & Intervention</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-workplace" value="workplace" checked />
+                            <label for="filter-workplace">Workplace Safety</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="checkbox" id="filter-focus-other" value="focus-other" checked />
+                            <label for="filter-focus-other">Other</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="info"></div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Add hidden SVG icons for conversion -->
+
+
+    <!-- <div id="map-legend"
+        style="position: absolute; bottom: 30px; right: 30px; background: white; padding: 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1;">
+        <h4 style="margin: 0 0 10px 0;">Program Population</h4>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+                <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+            </svg>
+            <span style="margin-left: 8px">Pediatric</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+
+            <span style="margin-left: 8px">Adult</span>
+        </div>
+        <div style="display: flex; align-items: center; margin: 5px 0;">
+
+            <span style="margin-left: 8px">Both</span>
+        </div>
+    </div> -->
+    </div>
+
+
+
+
+    <script>
+        let bounds;
+
+        // Function to convert SVG to image
+        function svgToImage(svgElement, callback) {
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svg64 = btoa(svgString);
+            const image = new Image();
+            image.onload = function () {
+                const canvas = document.createElement("canvas");
+                canvas.width = 30; // Match SVG width
+                canvas.height = 30; // Match SVG height
+                const context = canvas.getContext("2d");
+                context.drawImage(image, 0, 0);
+                callback(canvas.toDataURL("image/png"));
+            };
+            image.src = "data:image/svg+xml;base64," + svg64;
+        }
+
+        const infoDiv = document.getElementById("info");
+        const appData = {
+            points: [],
+            icons: {},
+        };
+
+        mapboxgl.accessToken =
+            "pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw";
+        const map = new mapboxgl.Map({
+            container: "map",
+            // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+            style: "mapbox://styles/mapbox/light-v11",
+            zoom: 2,
+            center: { lng: -0.02665959675479712, lat: 2 },
+            projection: "mercator",
+        });
+
+        // Define these functions in the global scope so they can be called from anywhere
+        function resetView() {
+            const div = document.createElement("div");
+
+            const span = document.createElement("span");
+            span.innerHTML = "There are no items in this view.";
+
+            const button = document.createElement("button");
+            button.className = "btn";
+            button.innerHTML = "Reset View";
+            button.onclick = () => {
+                map.fitBounds(bounds, { padding: 50 });
+            };
+
+            div.appendChild(span);
+            div.appendChild(button);
+
+            return div;
+        }
+
+        function generateItems(itemsArray) {
+            infoDiv.innerHTML = "";
+
+            itemsArray.forEach((item) => {
+                const props = item.properties;
+
+                const orgName = props["orgName"];
+                const programName = props["programName"];
+                const description = props["description"];
+
+                const div = document.createElement("div");
+                div.className = "location-item";
+                div.innerHTML = `
+                  <h3 class="location-name">${orgName}</h3>
+                  <div class="location-detail">
+                      ${programName}
+                  </div>
+                  <div class="location-detail">
+                      <span class="priority-tag">${description}</span>
+                  </div>
+              `;
+
+                div.addEventListener("click", () => {
+                    map.flyTo({
+                        center: item.geometry.coordinates,
+                        zoom: 12,
+                    });
+                });
+
+                infoDiv.appendChild(div);
+            });
+        }
+
+        window.addEventListener("load", () => {
+            const searchBox = new MapboxSearchBox();
+            searchBox.accessToken = mapboxgl.accessToken;
+            searchBox.marker = true;
+            searchBox.mapboxgl = mapboxgl;
+            map.addControl(searchBox);
+        });
+
+        map.on("load", () => {
+            // Convert SVG icons to images
+            svgToImage(document.getElementById("circle-icon"), function (dataUrl) {
+                const circleImage = new Image();
+                circleImage.onload = function () {
+                    map.addImage("circle-icon", circleImage);
+                };
+                circleImage.src = dataUrl;
+            });
+
+            svgToImage(document.getElementById("square-icon"), function (dataUrl) {
+                const squareImage = new Image();
+                squareImage.onload = function () {
+                    map.addImage("square-icon", squareImage);
+                };
+                squareImage.src = dataUrl;
+            });
+
+            svgToImage(
+                document.getElementById("triangle-icon"),
+                function (dataUrl) {
+                    const triangleImage = new Image();
+                    triangleImage.onload = function () {
+                        map.addImage("triangle-icon", triangleImage);
+                    };
+                    triangleImage.src = dataUrl;
+                }
+            );
+            svgToImage(
+                document.getElementById("square-gray"),
+                function (dataUrl) {
+                    const IconImage = new Image();
+                    IconImage.onload = function () {
+                        map.addImage("square-gray-icon", IconImage);
+                    };
+                    IconImage.src = dataUrl;
+                }
+            );
+
+            d3.csv(
+                "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5drxX_4NdOfkaLppzMqDkM102yvZPMGPUFrW8IFuN2v78Tv2142-kI4lgS6IFIOxwwxxStm1RzdwM/pub?output=csv"
+            ).then((data) => {
+                console.log(data);
+
+                bounds = new mapboxgl.LngLatBounds();
+
+                const points = data
+                    .filter((row) => row["Lat"] !== "" && row["Lon"] !== "")
+                    .map((row, index) => {
+                        const lat = parseFloat(row["Lat"]);
+                        const lon = parseFloat(row["Lon"]);
+                        bounds.extend([lon, lat]);
+
+                        const adult = row["Program Population (choice=Adult)"];
+                        const pediatric = row["Program Population (choice=Pediatric)"];
+                        const both = row["Program Population (choice=Both)"];
+
+                        let iconType = "square-gray"; //empty values 
+
+                        if (pediatric === "Checked") {
+                            iconType = "circle";
+                        }
+                        if (adult === "Checked") {
+                            iconType = "square";
+                        }
+                        if (both === "Checked" || (adult === "Checked" && pediatric === "Checked")) {
+                            iconType = "triangle";
+                            row["Program Population (choice=Adult)"] = "Checked";
+                            row["Program Population (choice=Pediatric)"] = "Checked";
+                        }
+
+
+                        const checkedFields = [];
+
+                        Object.entries(row).forEach(([key, value]) => {
+                            if (
+                                value === "Checked" &&
+                                key.includes("following focus areas does your program fall")
+                            ) {
+                                const val = key.split("(choice=")[1].slice(0, -1)
+                                checkedFields.push(val);
+                            }
+                        });
+
+                        const orgName = row["Name of your organization(s)"];
+                        const programName = row["Program Name"];
+                        const description = row["Brief Program Description"];
+                        const phone = row["Program phone number"];
+                        const email = row["Program Email Address(If Applicable)"];
+                        const website = row["Website/link to your program:"];
+
+                        return {
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [lon, lat],
+                            },
+                            properties: {
+                                ...row,
+                                iconType,
+
+                                orgName,
+                                programName,
+                                description,
+                                phone,
+                                email,
+                                website,
+                                checkedFields: checkedFields.join(", "),
+                            },
+                        };
+                    });
+
+                map.fitBounds(bounds, { padding: 150 });
+
+                console.log(points);
+                appData.points = points;
+                map.getSource("points").setData({
+                    type: "FeatureCollection",
+                    features: appData.points,
+                });
+
+                // Set up the filters after data is loaded
+                setupFilters();
+            });
+
+            map.addSource("points", {
+                type: "geojson",
+                data: {
+                    type: "FeatureCollection",
+                    features: [],
+                },
+            });
+
+            // Replace the circle layer with a symbol layer
+            map.addLayer({
+                id: "points",
+                source: "points",
+                type: "symbol",
+                layout: {
+                    "icon-image": ["concat", ["get", "iconType"], "-icon"],
+                    "icon-size": 0.8,
+                    "icon-allow-overlap": true,
+                },
+            });
+
+            map.on("mouseenter", "points", (e) => {
+                map.getCanvas().style.cursor = "pointer";
+            });
+            map.on("mouseleave", "points", (e) => {
+                map.getCanvas().style.cursor = "";
+            });
+
+            map.on("click", "points", (e) => {
+                const props = e.features[0].properties;
+
+                // The focus areas that is “checked”,
+
+                const programName = props["programName"];
+                const description = props["description"];
+                const phone = props["phone"] ? `Phone: ${props["phone"]}` : "";
+                const email = props["email"] ? `Email: ${props["email"]}` : "";
+                const website = props["website"] ? `Website: ${props["website"]}` : "";
+
+                const checkedFields = props["checkedFields"]
+
+                const popup = new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        `
+                    <h3 class="title">${programName}</h3>
+                    <div>${description}</div>
+                    <div>${phone}</div>
+                    <div>${email}</div>
+                    <div>${website}</div>
+                    
+                    <div style="font-weight:bold;padding-top:10px;">${checkedFields}</div>
+                  `
+                    )
+                    .addTo(map);
+            });
+
+
+        });
+
+        // Add filter functionality
+        let activeFilters = {
+            population: ['both', 'pediatric', 'adult'],
+            setting: ['other', 'rural', 'suburban', 'urban'],
+            focusAreas: ['suicide-prevention', 'hospital-based', 'data-surveillance', 'screening', 'workplace', 'focus-other']
+        };
+
+        function setupFilters() {
+            // Define filter configurations: mapping IDs to their filter types and values
+            const filterConfigs = [
+                // Population filters
+                { id: 'filter-both', type: 'population', value: 'both' },
+                { id: 'filter-pediatric', type: 'population', value: 'pediatric' },
+                { id: 'filter-adult', type: 'population', value: 'adult' },
+
+                // Setting filters
+                { id: 'filter-other', type: 'setting', value: 'other' },
+                { id: 'filter-rural', type: 'setting', value: 'rural' },
+                { id: 'filter-suburban', type: 'setting', value: 'suburban' },
+                { id: 'filter-urban', type: 'setting', value: 'urban' },
+
+                // Focus Area filters
+                { id: 'filter-suicide-prevention', type: 'focusAreas', value: 'suicide-prevention' },
+                { id: 'filter-hospital-based', type: 'focusAreas', value: 'hospital-based' },
+                { id: 'filter-data-surveillance', type: 'focusAreas', value: 'data-surveillance' },
+                { id: 'filter-screening', type: 'focusAreas', value: 'screening' },
+                { id: 'filter-workplace', type: 'focusAreas', value: 'workplace' },
+                { id: 'filter-focus-other', type: 'focusAreas', value: 'focus-other' }
+            ];
+
+            // Add event listeners for all filters in a single loop
+            filterConfigs.forEach(config => {
+                const element = document.getElementById(config.id);
+                if (element) {
+                    element.addEventListener('change', e => {
+                        updateFilter(config.type, config.value, e.target.checked);
+                    });
+                }
+            });
+        }
+
+        function updateFilter(filterType, value, isActive) {
+            if (isActive) {
+                if (!activeFilters[filterType].includes(value)) {
+                    activeFilters[filterType].push(value);
+                }
+            } else {
+                activeFilters[filterType] = activeFilters[filterType].filter(item => item !== value);
+            }
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            console.log('appData.points', appData.points);
+            console.log('activeFilters', activeFilters);
+
+            // Filter the points based on active filters
+            const filteredPoints = appData.points.filter(point => {
+                const props = point.properties;
+
+                // Check if the population type matches active filters
+                let hasMatchingPopulation = false;
+                const adultPop = props["Program Population (choice=Adult)"] === "Checked";
+                const pediatricPop = props["Program Population (choice=Pediatric)"] === "Checked";
+                const bothPop = props["Program Population (choice=Both)"] === "Checked";
+
+
+                // If any population filter matches, show the point
+                if (adultPop && activeFilters.population.includes('adult')) hasMatchingPopulation = true;
+                if (pediatricPop && activeFilters.population.includes('pediatric')) hasMatchingPopulation = true;
+                if (bothPop && activeFilters.population.includes('both')) hasMatchingPopulation = true;
+
+
+                console.log('props["Program Population (choice=Pediatric)"]', props["Program Population (choice=Pediatric)"], hasMatchingPopulation);
+                // If no population matches our filters, exclude this point
+                if (!hasMatchingPopulation) return false;
+
+                // Check program settings
+                let hasMatchingSetting = false;
+                const otherSetting = props["Program Setting (Select all that applies) (choice=Other)"] === "Checked";
+                const ruralSetting = props["Program Setting (Select all that applies) (choice=Rural)"] === "Checked";
+                const suburbanSetting = props["Program Setting (Select all that applies) (choice=Suburban)"] === "Checked";
+                const urbanSetting = props["Program Setting (Select all that applies) (choice=Urban)"] === "Checked";
+
+                // If any setting filter matches, show the point
+                if (otherSetting && activeFilters.setting.includes('other')) hasMatchingSetting = true;
+                if (ruralSetting && activeFilters.setting.includes('rural')) hasMatchingSetting = true;
+                if (suburbanSetting && activeFilters.setting.includes('suburban')) hasMatchingSetting = true;
+                if (urbanSetting && activeFilters.setting.includes('urban')) hasMatchingSetting = true;
+
+                // If no setting matches our filters, exclude this point
+                if (!hasMatchingSetting) return false;
+
+                // Check focus areas
+                let hasMatchingFocusArea = false;
+                const suicidePrevention = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Firearm suicide prevention protocol)"] === "Checked";
+                const hospitalBased = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Hospital-Based Violence Intervention Programs and working with communities)"] === "Checked";
+                const dataSurveillance = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Leveraging health system data to improve firearm injury surveillance and programmatic evaluation)"] === "Checked";
+                const screening = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Screening and intervening among patients at-risk for firearm injuries)"] === "Checked";
+                const workplace = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Workplace Safety)"] === "Checked";
+                const focusOther = props["Which of the following focus areas does your program fall under? (Select all that applies) (choice=Other)"] === "Checked";
+
+                // If any focus area filter matches, show the point
+                if (suicidePrevention && activeFilters.focusAreas.includes('suicide-prevention')) hasMatchingFocusArea = true;
+                if (hospitalBased && activeFilters.focusAreas.includes('hospital-based')) hasMatchingFocusArea = true;
+                if (dataSurveillance && activeFilters.focusAreas.includes('data-surveillance')) hasMatchingFocusArea = true;
+                if (screening && activeFilters.focusAreas.includes('screening')) hasMatchingFocusArea = true;
+                if (workplace && activeFilters.focusAreas.includes('workplace')) hasMatchingFocusArea = true;
+                if (focusOther && activeFilters.focusAreas.includes('focus-other')) hasMatchingFocusArea = true;
+
+                // If no focus area matches our filters, exclude this point
+                if (!hasMatchingFocusArea) return false;
+
+                return true;
+            });
+
+            console.log('filteredPoints', filteredPoints);
+
+            // Update the map with filtered points
+            map.getSource('points').setData({
+                type: 'FeatureCollection',
+                features: filteredPoints
+            });
+
+            // Update the sidebar with filtered points that are in the current view
+            const currentBounds = map.getBounds();
+            const bbox = [
+                currentBounds.getWest(),
+                currentBounds.getSouth(),
+                currentBounds.getEast(),
+                currentBounds.getNorth()
+            ];
+            const bboxPolygon = turf.bboxPolygon(bbox);
+
+            const visibleFilteredPoints = filteredPoints.filter(point => {
+                return true;
+                //return turf.booleanPointInPolygon(point, bboxPolygon);
+            });
+
+            if (visibleFilteredPoints.length > 0) {
+                generateItems(visibleFilteredPoints);
+            } else {
+                infoDiv.innerHTML = '';
+                infoDiv.appendChild(resetView());
+            }
+        }
+
+    </script>
+</body>
+
+</html>
