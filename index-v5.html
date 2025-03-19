@@ -47,10 +47,10 @@
         }
 
         #content-container * {
-            user-select: none;
+            /* user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
-            -ms-user-select: none;
+            -ms-user-select: none; */
         }
 
         #info {
@@ -237,6 +237,11 @@
         .filter-option label {
             font-size: 13px;
             cursor: pointer;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -497,13 +502,9 @@
                   <div>
                       <span class="location-detail">${city}, ${state} ${zip}</span>
                   </div>
-
                   <div class="location-detail">
                       <span class="priority-tag">${description}</span>
                   </div>
-                 
-                 
-
               `;
 
                 div.addEventListener("click", () => {
@@ -679,16 +680,21 @@
                 const description = props["description"];
                 const phone = props["phone"] ? `<b>Phone</b>: ${props["phone"]}` : "";
                 const email = props["email"] ? `<b>Email</b>: ${props["email"]}` : "";
-                const website = props["website"] ? `<b>Website</b>: ${props["website"]}` : "";
+                const link = props["website"] ? props["website"].replace("http://", "").replace("https://", "").replace("www.", "") : "";
+                const website = link ? `<b>Website</b>: <a href="https://${props["website"]}" target="_blank">${link}</a>` : "";
 
                 const checkedFields = props["checkedFields"]
+
+                const organizationName = props["orgName"];
 
                 const popup = new mapboxgl.Popup()
                     .setLngLat(e.lngLat)
                     .setHTML(
                         `
                     <h3 class="title">${programName}</h3>
-                    <div>${description}</div>
+                    <i>${organizationName}</i>
+                    
+                    <div style="border-top:1px solid gray;padding-top:5px;">${description}</div>
                     
                     
                     <div style="margin-top:10px;">${email}</div>
