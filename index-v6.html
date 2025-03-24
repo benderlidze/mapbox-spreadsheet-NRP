@@ -249,12 +249,12 @@
             text-decoration: underline;
         }
 
+        .legend {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .description {
-                display: none;
-            }
-
-            .legend {
                 display: none;
             }
         }
@@ -416,10 +416,12 @@
 
         legendButton.addEventListener('click', () => {
             const legend = document.querySelector('.legend');
-            if (legend.style.display === 'none') {
+            if (legend.style.display === '' || legend.style.display === 'none') {
                 legend.style.display = 'block';
+                legendButton.textContent = 'Hide Legend';
             } else {
                 legend.style.display = 'none';
+                legendButton.textContent = 'Show Legend';
             }
         });
 
