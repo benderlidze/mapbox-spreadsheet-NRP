@@ -263,7 +263,8 @@
         #burger-menu {
             position: absolute;
             top: 20px;
-            left: 20px;
+            left: 320px;
+
             width: 40px;
             height: 40px;
             background-color: white;
@@ -274,7 +275,7 @@
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            z-index: 10000;
+            z-index: 100000;
             transition: all 0.3s ease;
             padding: 8px;
         }
@@ -351,13 +352,6 @@
             </div>
         </div>
 
-        <div style="position: relative;">
-            <div id="burger-menu">
-                <div class="burger-bar"></div>
-                <div class="burger-bar"></div>
-                <div class="burger-bar"></div>
-            </div>
-        </div>
 
         <div id="filters-container">
             <!-- Focus Areas first -->
@@ -464,6 +458,11 @@
 
         <div id="content-container">
             <div style="position:relative;top:0px;left:0px;z-index:100">
+                <div id="burger-menu">
+                    <div class="burger-bar"></div>
+                    <div class="burger-bar"></div>
+                    <div class="burger-bar"></div>
+                </div>
                 <div id="info"></div>
             </div>
             <div id="map"></div>
@@ -487,13 +486,13 @@
                 burgerMenu.classList.remove('sidebar-hidden');
                 // Adjust burger position when sidebar is visible
                 setTimeout(() => {
-                    burgerMenu.style.left = '20px';
+                    burgerMenu.style.right = '20px'; // Updated
                 }, 300);
             } else {
                 infoPanel.classList.add('hidden');
                 burgerMenu.classList.add('sidebar-hidden');
                 // Adjust burger position when sidebar is hidden
-                burgerMenu.style.left = '20px';
+                burgerMenu.style.right = '20px'; // Updated
             }
         });
 
