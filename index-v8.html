@@ -492,8 +492,33 @@
             }
         });
 
+
+        legendButton.textContent = 'Hide Legend';
+        const legend = document.querySelector('.legend');
+
+
+        // Handle mobile display - hide sidebar on small screens by default
+        function checkMobileAndHideSidebar() {
+            if (window.innerWidth <= 768) {
+                infoPanel.classList.add('hidden');
+                sidebarVisible = false;
+                burgerMenu.classList.remove('sidebar-hidden');
+                legend.style.display = 'none';
+                legendButton.textContent = 'Show Legend';
+            } else {
+                infoPanel.classList.remove('hidden');
+                sidebarVisible = true;
+                burgerMenu.classList.add('sidebar-hidden');
+                legend.style.display = 'block';
+                legendButton.textContent = 'Hide Legend';
+            }
+        }
+        // Check on page load
+        checkMobileAndHideSidebar();
+        // Check when window is resized
+        window.addEventListener('resize', checkMobileAndHideSidebar);
+
         legendButton.addEventListener('click', () => {
-            const legend = document.querySelector('.legend');
             if (legend.style.display === '' || legend.style.display === 'none') {
                 legend.style.display = 'block';
                 legendButton.textContent = 'Hide Legend';
