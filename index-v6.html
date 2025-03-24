@@ -244,7 +244,7 @@
             text-decoration: underline;
         }
 
-        #hide-legend{
+        #hide-legend {
             cursor: pointer;
             text-decoration: underline;
         }
@@ -254,6 +254,9 @@
                 display: none;
             }
 
+            .legend {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -295,101 +298,111 @@
             <div id="filters-container">
 
                 <!-- Focus Areas first -->
-                <div class="filter-section">
-                    <div style="display: flex;justify-content: space-between;">
-                        <h4>Focus Areas</h4>
-                        <div id="hide-legend">
-                            Hide
-                        </div>
-                    </div>
-                    <div class="filter-options">
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-suicide-prevention" value="suicide-prevention" checked />
-                            <label for="filter-suicide-prevention">Firearm Suicide Prevention</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-hospital-based" value="hospital-based" checked />
-                            <label for="filter-hospital-based">Hospital-Based Violence Intervention</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-data-surveillance" value="data-surveillance" checked />
-                            <label for="filter-data-surveillance">Data Surveillance</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-screening" value="screening" checked />
-                            <label for="filter-screening">Screening & Intervention</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-workplace" value="workplace" checked />
-                            <label for="filter-workplace">Workplace Safety</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-focus-other" value="focus-other" checked />
-                            <label for="filter-focus-other">Other</label>
-                        </div>
+
+                <div style="display: flex;justify-content: flex-end;">
+                    <div id="hide-legend">
+                        Show Legend
                     </div>
                 </div>
 
-                <!-- Program Population second -->
-                <div class="filter-section">
-                    <h4>Program Population</h4>
-                    <div class="filter-options">
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-both" value="both" checked />
-                            <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
-                                <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2">
-                                </polygon>
-                            </svg>
-                            <label for="filter-both">Both</label>
+                <div class="legend">
+                    <div class="filter-section">
+
+                        <div>
+                            <h4>Focus Areas</h4>
                         </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-pediatric" value="pediatric" checked />
-                            <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
-                                <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
-                            </svg>
-                            <label for="filter-pediatric">Pediatric</label>
+                        <div class="filter-options">
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-suicide-prevention" value="suicide-prevention"
+                                    checked />
+                                <label for="filter-suicide-prevention">Firearm Suicide Prevention</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-hospital-based" value="hospital-based" checked />
+                                <label for="filter-hospital-based">Hospital-Based Violence Intervention</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-data-surveillance" value="data-surveillance"
+                                    checked />
+                                <label for="filter-data-surveillance">Data Surveillance</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-screening" value="screening" checked />
+                                <label for="filter-screening">Screening & Intervention</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-workplace" value="workplace" checked />
+                                <label for="filter-workplace">Workplace Safety</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-focus-other" value="focus-other" checked />
+                                <label for="filter-focus-other">Other</label>
+                            </div>
                         </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-adult" value="adult" checked />
-                            <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
-                                <rect x="3" y="3" width="24" height="24" fill="green" stroke="white" stroke-width="2">
+                    </div>
+
+                    <!-- Program Population second -->
+                    <div class="filter-section">
+                        <h4>Program Population</h4>
+                        <div class="filter-options">
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-both" value="both" checked />
+                                <svg id="triangle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                    <polygon points="15,3 27,27 3,27" fill="orange" stroke="white" stroke-width="2">
+                                    </polygon>
+                                </svg>
+                                <label for="filter-both">Both</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-pediatric" value="pediatric" checked />
+                                <svg id="circle-icon" width="20" height="20" viewBox="0 0 30 30">
+                                    <circle cx="15" cy="15" r="12" fill="red" stroke="white" stroke-width="2"></circle>
+                                </svg>
+                                <label for="filter-pediatric">Pediatric</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-adult" value="adult" checked />
+                                <svg id="square-icon" width="20" height="20" viewBox="0 0 30 30">
+                                    <rect x="3" y="3" width="24" height="24" fill="green" stroke="white"
+                                        stroke-width="2">
+                                    </rect>
+                                </svg>
+                                <label for="filter-adult">Adult</label>
+                            </div>
+
+                            <svg id="square-gray" width="20" height="20" viewBox="0 0 30 30">
+                                <rect x="3" y="3" width="24" height="24" fill="gray" stroke="white" stroke-width="2">
                                 </rect>
                             </svg>
-                            <label for="filter-adult">Adult</label>
-                        </div>
 
-                        <svg id="square-gray" width="20" height="20" viewBox="0 0 30 30">
-                            <rect x="3" y="3" width="24" height="24" fill="gray" stroke="white" stroke-width="2">
-                            </rect>
-                        </svg>
-
-                    </div>
-                </div>
-
-                <!-- Program Setting third -->
-                <div class="filter-section">
-                    <h4>Program Setting</h4>
-                    <div class="filter-options">
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-other" value="other" checked />
-                            <label for="filter-other">Other</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-rural" value="rural" checked />
-                            <label for="filter-rural">Rural</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-suburban" value="suburban" checked />
-                            <label for="filter-suburban">Suburban</label>
-                        </div>
-                        <div class="filter-option">
-                            <input type="checkbox" id="filter-urban" value="urban" checked />
-                            <label for="filter-urban">Urban</label>
                         </div>
                     </div>
+
+                    <!-- Program Setting third -->
+                    <div class="filter-section">
+                        <h4>Program Setting</h4>
+                        <div class="filter-options">
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-other" value="other" checked />
+                                <label for="filter-other">Other</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-rural" value="rural" checked />
+                                <label for="filter-rural">Rural</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-suburban" value="suburban" checked />
+                                <label for="filter-suburban">Suburban</label>
+                            </div>
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-urban" value="urban" checked />
+                                <label for="filter-urban">Urban</label>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
-
-
             </div>
             <div id="info"></div>
             <div id="map"></div>
@@ -399,6 +412,16 @@
 
     <script>
         let bounds;
+        const legendButton = document.getElementById('hide-legend');
+
+        legendButton.addEventListener('click', () => {
+            const legend = document.querySelector('.legend');
+            if (legend.style.display === 'none') {
+                legend.style.display = 'block';
+            } else {
+                legend.style.display = 'none';
+            }
+        });
 
         // Function to convert SVG to image
         function svgToImage(svgElement, callback) {
@@ -595,19 +618,27 @@
                 }
             );
 
+            function isValidCoordinate(lng, lat) {
+                return !isNaN(lng) && !isNaN(lat) &&
+                    lng >= -180 && lng <= 180 &&
+                    lat >= -90 && lat <= 90;
+            }
+
             d3.csv(
                 "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5drxX_4NdOfkaLppzMqDkM102yvZPMGPUFrW8IFuN2v78Tv2142-kI4lgS6IFIOxwwxxStm1RzdwM/pub?output=csv"
             ).then((data) => {
                 console.log(data);
 
                 bounds = new mapboxgl.LngLatBounds();
-
+                const temp = []
                 const points = data
                     .filter((row) => row["Lat"] !== "" && row["Lon"] !== "")
                     .map((row, index) => {
                         const lat = parseFloat(row["Lat"]);
                         const lon = parseFloat(row["Lon"]);
+
                         bounds.extend([lon, lat]);
+
 
                         const adult = row["Program Population (choice=Adult)"];
                         const pediatric = row["Program Population (choice=Pediatric)"];
@@ -668,7 +699,10 @@
                         };
                     });
 
-                map.fitBounds(bounds, { padding: 150 });
+                console.log('bounds', bounds);
+                console.log('temp', temp);
+
+                map.fitBounds(bounds, { padding: 10 });
 
                 console.log(points);
                 appData.points = points;
