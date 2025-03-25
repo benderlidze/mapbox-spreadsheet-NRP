@@ -540,7 +540,6 @@
         const legend = document.querySelector('.legend');
 
 
-        // Handle mobile display - hide sidebar on small screens by default
         function checkMobileAndHideSidebar() {
             if (window.innerWidth <= 768) {
                 infoPanel.classList.add('hidden');
@@ -548,14 +547,22 @@
                 burgerMenu.classList.remove('sidebar-hidden');
                 legend.style.display = 'none';
                 legendButton.textContent = 'Show Legend';
+
+                arrowIcon.style.display = 'none';
+                burgerIcon.style.display = 'block';
+
             } else {
                 infoPanel.classList.remove('hidden');
                 sidebarVisible = true;
                 burgerMenu.classList.add('sidebar-hidden');
                 legend.style.display = 'block';
                 legendButton.textContent = 'Hide Legend';
+
+                arrowIcon.style.display = 'block';
+                burgerIcon.style.display = 'none';
             }
         }
+
         // Check on page load
         checkMobileAndHideSidebar();
         // Check when window is resized
